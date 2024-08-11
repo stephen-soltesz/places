@@ -9,43 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-
-	places "cloud.google.com/go/maps/places/apiv1"
-	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
-	gax "github.com/googleapis/gax-go/v2"
 )
-
-func x() {
-	ctx := context.Background()
-	// It will require modifications to work:
-	// - It may require specifying regional endpoints when creating the service client as shown in:
-	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
-	// 'X-Goog-FieldMask'
-	c, err := places.NewRESTClient(ctx)
-	if err != nil {
-		panic(err)
-	}
-	defer c.Close()
-
-	req := &placespb.SearchTextRequest{
-		TextQuery: "restaurants in Tarrytown, NY",
-		// See https://pkg.go.dev/cloud.google.com/go/maps/places/apiv1/placespb#SearchTextRequest.
-		MinRating: 1.0,
-	}
-	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, []string{"X-Goog-FieldMask", "*"}...)
-	resp, err := c.SearchText(ctx, req)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(resp.String())
-	for i, place := range resp.Places {
-		fmt.Println(
-			i, place.Name, place.Rating, place.DisplayName, place.PrimaryType, place.FormattedAddress,
-			place.GoogleMapsUri, place.WebsiteUri, place.AllowsDogs, place.Takeout, place.Delivery, place.DineIn)
-	}
-	// TODO: Use resp.
-	_ = resp
-}
 
 type SearchResp struct {
 	Places        []Place `json:"places"`
@@ -194,25 +158,3 @@ func getReqBody(page string) *bytes.Buffer {
 }`))
 	}
 }
-
-/*
-
-curl -X POST -d '{
-  "textQuery" : "restaurants near Tarrytown, NY"
-}' \
--H 'Content-Type: application/json'
--H 'X-Goog-Api-Key: key'
--H 'X-Goog-FieldMask: *'
-'https://places.googleapis.com/v1/places:searchText'
-
-
- curl -X POST -d '{
-  "textQuery" : "restaurants near Tarrytown, NY"
-  "pageToken": "AeCrKXsZWzNVbPzO-MRWPu52jWO_Xx8aKwOQ69_Je3DxRpfdjClq8Ekwh3UcF2h2Jn75kL6PtWLGV4ecQri-GEUKN_OFpJkdVc-JL4Q"
-  }' \
--H 'Content-Type: application/json'
--H 'X-Goog-Api-Key: key'
--H "X-Goog-FieldMask: *" \
-'https://places.googleapis.com/v1/places:searchText'
-
-*/
